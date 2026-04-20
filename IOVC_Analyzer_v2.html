@@ -1,0 +1,1110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IOVC Analyzer v2 — TFG María</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #13131a;
+    --surface2: #1c1c26;
+    --border: #2a2a3a;
+    --accent: #6c63ff;
+    --accent2: #ff6b6b;
+    --accent3: #43e97b;
+    --text: #e8e8f0;
+    --muted: #6b6b80;
+    --investee: #6c63ff;
+    --fund: #ff6b6b;
+    --community: #43e97b;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'DM Mono', monospace;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 32px;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+  }
+  h1 span { color: var(--accent); }
+
+  .subtitle {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge {
+    font-size: 10px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+  }
+
+  .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .panel-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  /* PDF Drop Zone */
+  .drop-zone {
+    border: 2px dashed var(--border);
+    border-radius: 10px;
+    padding: 24px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-bottom: 12px;
+    position: relative;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: var(--accent);
+    background: rgba(108,99,255,0.06);
+  }
+  .drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+  .drop-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.7; }
+  .drop-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .drop-text strong { color: var(--accent); }
+  .drop-formats { font-size: 10px; color: var(--muted); margin-top: 4px; opacity: 0.7; }
+
+  /* Progress bar for PDF extraction */
+  .progress-wrap {
+    display: none;
+    margin-bottom: 12px;
+  }
+  .progress-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .progress-track {
+    height: 4px;
+    background: var(--surface2);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 2px;
+    transition: width 0.3s;
+    width: 0%;
+  }
+
+  /* Divider */
+  .or-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+  }
+  .or-divider::before, .or-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+  }
+
+  textarea {
+    width: 100%;
+    height: 160px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 14px;
+    resize: vertical;
+    outline: none;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); }
+  textarea::placeholder { color: var(--muted); }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  button {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.3px;
+  }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+
+  .btn-primary { background: var(--accent); color: white; font-weight: 500; }
+  .btn-primary:hover:not(:disabled) { background: #7c74ff; transform: translateY(-1px); }
+
+  .btn-secondary { background: var(--surface2); color: var(--muted); border: 1px solid var(--border); }
+  .btn-secondary:hover:not(:disabled) { border-color: var(--accent); color: var(--text); }
+
+  .btn-export { background: var(--surface2); color: var(--accent3); border: 1px solid var(--border); margin-left: auto; }
+  .btn-export:hover:not(:disabled) { border-color: var(--accent3); }
+
+  .btn-pdf { background: rgba(108,99,255,0.12); color: var(--accent); border: 1px solid rgba(108,99,255,0.3); }
+  .btn-pdf:hover:not(:disabled) { background: rgba(108,99,255,0.2); }
+
+  /* File info chip */
+  .file-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    background: rgba(67,233,123,0.1);
+    border: 1px solid rgba(67,233,123,0.3);
+    color: var(--accent3);
+    margin-bottom: 10px;
+  }
+  .file-chip .remove-file {
+    cursor: pointer;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1;
+  }
+  .file-chip .remove-file:hover { color: var(--accent2); }
+
+  /* Report name */
+  .report-name-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .report-name-row input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    padding: 8px 12px;
+    outline: none;
+  }
+  .report-name-row input:focus { border-color: var(--accent); }
+  .report-name-row input::placeholder { color: var(--muted); }
+
+  /* Results */
+  .results-panel { grid-column: 1 / -1; }
+
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  @media (max-width: 600px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+
+  .stat-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+  .stat-value {
+    font-family: 'Syne', sans-serif;
+    font-size: 26px;
+    font-weight: 800;
+    line-height: 1;
+  }
+  .stat-label {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .strategies-grid { display: flex; flex-direction: column; gap: 8px; }
+
+  .strategy-row {
+    display: grid;
+    grid-template-columns: 160px 1fr 70px 90px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    transition: border-color 0.2s;
+  }
+  @media (max-width: 600px) {
+    .strategy-row { grid-template-columns: 1fr 1fr; grid-template-rows: auto auto; }
+  }
+  .strategy-row:hover { border-color: var(--accent); }
+
+  .strategy-name {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .level-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+
+  .bar-track {
+    height: 8px;
+    background: var(--surface);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+  }
+  .bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+  }
+  .bar-fill.investee { background: linear-gradient(90deg, var(--investee), #9c95ff); }
+  .bar-fill.fund { background: linear-gradient(90deg, var(--fund), #ff9f9f); }
+  .bar-fill.community { background: linear-gradient(90deg, var(--community), #a0f5c0); }
+
+  .freq-count { font-size: 13px; font-weight: 500; text-align: right; }
+  .weight-badge { display: flex; align-items: center; justify-content: center; gap: 1px; }
+  .star { font-size: 13px; color: var(--border); }
+  .star.active { color: #ffd700; }
+
+  .level-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 16px 0 8px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  .level-header .dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  .keywords-found {
+    margin-top: 20px;
+    padding: 14px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+  .kw-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .kw-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+  .kw-tag {
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+  }
+  .kw-tag.investee { border-color: rgba(108,99,255,0.5); color: #9c95ff; }
+  .kw-tag.fund { border-color: rgba(255,107,107,0.5); color: #ff9f9f; }
+  .kw-tag.community { border-color: rgba(67,233,123,0.5); color: #a0f5c0; }
+  .kw-count { opacity: 0.6; margin-left: 3px; }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--muted);
+    font-size: 12px;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 10px; opacity: 0.5; }
+
+  .tab-row {
+    display: flex;
+    gap: 2px;
+    margin-bottom: 16px;
+    background: var(--surface2);
+    padding: 3px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    width: fit-content;
+  }
+  .tab {
+    font-size: 11px;
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--muted);
+    transition: all 0.2s;
+    user-select: none;
+    white-space: nowrap;
+  }
+  .tab.active { background: var(--accent); color: white; }
+
+  .reports-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .report-chip {
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .report-chip .remove { color: var(--muted); font-size: 16px; line-height: 1; cursor: pointer; }
+  .report-chip .remove:hover { color: var(--accent2); }
+
+  .multi-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .multi-table th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    color: var(--muted);
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  .multi-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid rgba(42,42,58,0.4);
+    vertical-align: middle;
+  }
+  .multi-table tr:hover td { background: rgba(28,28,38,0.6); }
+
+  .cell-bar { display: flex; align-items: center; gap: 5px; }
+  .cell-mini-bar { width: 36px; height: 5px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+
+  /* Toast */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 18px;
+    font-size: 12px;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    z-index: 100;
+    max-width: 320px;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-color: rgba(67,233,123,0.4); }
+  .toast.error { border-color: rgba(255,107,107,0.4); }
+
+  /* Legend panel info */
+  .info-box {
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--surface2);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>IOVC <span>Analyzer</span></h1>
+    <div class="subtitle">Impact-Oriented Value Creation Framework — Justo & Nachyła, 2024</div>
+  </div>
+  <div class="badge">TFG · IE University · v2.0</div>
+</header>
+
+<div class="layout">
+
+  <!-- Input panel -->
+  <div class="panel">
+    <div class="panel-label">Fuente del reporte</div>
+
+    <!-- Report name -->
+    <div class="report-name-row">
+      <input type="text" id="reportName" placeholder="Nombre del reporte (ej: GIIN State of Market 2024)" />
+    </div>
+
+    <!-- File chip (shown when PDF loaded) -->
+    <div id="fileChip" style="display:none"></div>
+
+    <!-- PDF drop zone -->
+    <div class="drop-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf,.txt" onchange="handleFileSelect(event)" />
+      <div class="drop-icon">📎</div>
+      <div class="drop-text">
+        <strong>Arrastra un PDF aquí</strong> o haz clic para seleccionar<br>
+      </div>
+      <div class="drop-formats">Formatos: PDF · TXT</div>
+    </div>
+
+    <!-- Progress -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-label">
+        <span id="progressLabel">Extrayendo texto del PDF...</span>
+        <span id="progressPct">0%</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+
+    <!-- OR divider -->
+    <div class="or-divider">o escribe / pega texto</div>
+
+    <!-- Text area -->
+    <textarea id="textInput" placeholder="Pega aquí el texto del reporte manualmente..."></textarea>
+
+    <div class="controls">
+      <button class="btn-primary" onclick="analyzeText()" id="analyzeBtn">▶ Analizar</button>
+      <button class="btn-secondary" onclick="loadDemo()">★ Demo</button>
+      <button class="btn-secondary" onclick="clearAll()">✕ Limpiar</button>
+      <button class="btn-export" onclick="saveReport()" id="saveBtn" style="display:none">+ Guardar</button>
+    </div>
+  </div>
+
+  <!-- Legend panel -->
+  <div class="panel">
+    <div class="panel-label">Las 10 estrategias IOVC</div>
+    <div style="margin-bottom:12px">
+      <div class="level-header"><span class="dot" style="background:var(--investee)"></span>Investee Level</div>
+      <div style="font-size:11px;color:var(--muted);line-height:2;padding-left:18px">
+        1. Impact Planning &nbsp;·&nbsp; 2. Impact Measuring<br>
+        3. Impact Reporting &nbsp;·&nbsp; 4. Impact Managing
+      </div>
+    </div>
+    <div style="margin-bottom:12px">
+      <div class="level-header"><span class="dot" style="background:var(--fund)"></span>Fund Level</div>
+      <div style="font-size:11px;color:var(--muted);line-height:2;padding-left:18px">
+        5. Legal &nbsp;·&nbsp; 6. Governance<br>
+        7. Talent Management &nbsp;·&nbsp; 8. Financial Incentives
+      </div>
+    </div>
+    <div>
+      <div class="level-header"><span class="dot" style="background:var(--community)"></span>Community Level</div>
+      <div style="font-size:11px;color:var(--muted);line-height:2;padding-left:18px">
+        9. Portfolio Engagement &nbsp;·&nbsp; 10. Ecosystem Building
+      </div>
+    </div>
+    <div class="info-box">
+      <strong style="color:var(--text)">Cómo usar con PDFs:</strong><br>
+      1. Arrastra o selecciona el PDF del reporte<br>
+      2. El texto se extrae automáticamente<br>
+      3. Ponle un nombre y pulsa <strong>Analizar</strong><br>
+      4. Guarda el resultado con <strong>+ Guardar</strong><br>
+      5. Repite con cada reporte y compara en la pestaña <strong>Comparar</strong><br>
+      6. Exporta el CSV para tu Excel de metodología
+    </div>
+  </div>
+
+  <!-- Results panel -->
+  <div class="panel results-panel">
+    <div class="tab-row">
+      <div class="tab active" id="tab-current" onclick="switchTab('current')">Análisis actual</div>
+      <div class="tab" id="tab-compare" onclick="switchTab('compare')">Comparar reportes (<span id="reportCount">0</span>)</div>
+    </div>
+
+    <div id="currentView">
+      <div id="emptyState" class="empty-state">
+        <div class="empty-icon">📄</div>
+        <div>Sube un PDF o pega texto y pulsa <strong>Analizar</strong></div>
+        <div style="margin-top:6px;opacity:0.6">O pulsa <strong>★ Demo</strong> para ver un ejemplo</div>
+      </div>
+      <div id="analysisResults" style="display:none">
+        <div class="stats-row" id="statsRow"></div>
+        <div class="strategies-grid" id="strategiesGrid"></div>
+        <div class="keywords-found" id="keywordsFound"></div>
+      </div>
+    </div>
+
+    <div id="compareView" style="display:none">
+      <div id="savedReportsList" class="reports-list"></div>
+      <div id="compareTable"></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<!-- PDF.js from CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script>
+// Configure PDF.js worker
+if (typeof pdfjsLib !== 'undefined') {
+  pdfjsLib.GlobalWorkerOptions.workerSrc =
+    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+}
+
+// ============================================================
+// IOVC KEYWORD DICTIONARY
+// ============================================================
+const STRATEGIES = [
+  {
+    id: 'planning', name: 'Impact Planning', level: 'investee',
+    keywords: [
+      'impact planning','theory of change','impact thesis','impact champion',
+      'impact workshop','impact mapping','logic model','impact strategy',
+      'impact goals','impact objectives','intended impact','impact design',
+      'sdg alignment','impact intention','mission alignment','impact framework',
+      'impact roadmap','impact target','impact deep dive','impact plan',
+      'impact vision','impact purpose','investment impact thesis'
+    ]
+  },
+  {
+    id: 'measuring', name: 'Impact Measuring', level: 'investee',
+    keywords: [
+      'kpi','key performance indicator','impact measurement','impact metrics',
+      'measuring impact','impact data','data collection','impact performance',
+      'benchmark','impact baseline','impact indicator','measurement framework',
+      'impact assessment','outcome measurement','output','outcome','impact kpi',
+      'iris','sdg indicator','impact evidence','additionality','counterfactual',
+      'net impact','negative externali','lock-step','impact quantif',
+      'impact score','impact target','performance indicator'
+    ]
+  },
+  {
+    id: 'reporting', name: 'Impact Reporting', level: 'investee',
+    keywords: [
+      'impact report','impact reporting','annual report','transparency',
+      'disclosure','accountability','stakeholder reporting','impact disclosure',
+      'reporting standard','impact communication','impact publication',
+      'reporting requirement','gri','sfdr','csrd','report to stakeholder',
+      'impact transparency','publish impact','impact data reporting',
+      'impact update','quarterly report','impact narrative'
+    ]
+  },
+  {
+    id: 'managing', name: 'Impact Managing', level: 'investee',
+    keywords: [
+      'impact management','imm','impact monitoring','mission drift',
+      'impact guardian','manage impact','continuous improvement',
+      'organizational learning','impact revision','impact adjustment',
+      'impact lifecycle','exit impact','impact continuity','impact lock',
+      'mission preservation','impact review','revising kpi',
+      'impact continuity after exit','impact after exit','impact oversight',
+      'impact update','managing impact','impact evolution'
+    ]
+  },
+  {
+    id: 'legal', name: 'Legal', level: 'fund',
+    keywords: [
+      'mission drift clause','legal','investment contract','covenant',
+      'impact clause','legal structure','articles of association','lpa',
+      'limited partnership agreement','investment agreement','impact covenant',
+      'legal mechanism','contractual','impact commitment','mission lock',
+      'b corp','benefit corporation','shared values manifesto',
+      'impact constitution','impact requirement clause','legal protection',
+      'mission protection','impact lock-in'
+    ]
+  },
+  {
+    id: 'governance', name: 'Governance', level: 'fund',
+    keywords: [
+      'board','governance','investment thesis','board seat','supervisory board',
+      'board membership','impact committee','investment committee',
+      'board representation','portfolio governance','impact board',
+      'governance structure','board engagement','advisory board',
+      'board meeting','fund governance','impact oversight',
+      'impact advisory','governance model','board composition',
+      'impact steering','governance framework'
+    ]
+  },
+  {
+    id: 'talent', name: 'Talent Management', level: 'fund',
+    keywords: [
+      'talent','impact team','impact professional','impact officer',
+      'impact manager','impact staff','impact training','team capacity',
+      'hire','recruitment','impact specialist','impact analyst',
+      'impact culture','team development','impact expertise',
+      'impact skills','human resource','dedicated impact','impact dna',
+      'whole team','impact-driven team','impact person','impact hire',
+      'impact employee','impact function','impact role'
+    ]
+  },
+  {
+    id: 'incentives', name: 'Financial Incentives', level: 'fund',
+    keywords: [
+      'carried interest','carry','impact carry','financial incentive',
+      'impact hurdle','performance fee','impact bonus','compensation',
+      'remuneration','impact multiple','impact linked','pay for performance',
+      'impact premium','impact return','impact-based compensation',
+      'fund manager incentive','impact salary','variable pay',
+      'impact-oriented carry','incentive structure','impact reward',
+      'impact compensation','profit sharing'
+    ]
+  },
+  {
+    id: 'portfolio', name: 'Portfolio Engagement', level: 'community',
+    keywords: [
+      'portfolio engagement','peer learning','community building',
+      'investee community','portfolio company','synergy','collaboration',
+      'b corp certification','knowledge sharing','best practice',
+      'portfolio network','investee network','impact community',
+      'supply chain','value chain','cross-portfolio','portfolio event',
+      'partner network','co-investment','supplier-buyer',
+      'investee collaboration','portfolio synergy','impact peer',
+      'learning session','portfolio community'
+    ]
+  },
+  {
+    id: 'ecosystem', name: 'Ecosystem Building', level: 'community',
+    keywords: [
+      'ecosystem','market building','sector development','impact ecosystem',
+      'advocacy','policy','regulation','legitimacy','field building',
+      'impact market','limited partner','corporate partner',
+      'ecosystem development','market creation','systemic change',
+      'impact infrastructure','industry building','impact standard',
+      'impact norm','sector advocacy','policy influence','non-investee',
+      'ecosystem actor','impact field','market infrastructure',
+      'sector legitimacy','impact industry'
+    ]
+  }
+];
+
+const LEVEL_COLORS = { investee: '#6c63ff', fund: '#ff6b6b', community: '#43e97b' };
+let savedReports = [];
+
+// ============================================================
+// PDF HANDLING
+// ============================================================
+function handleFileSelect(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  loadFile(file);
+}
+
+// Drag & drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  const file = e.dataTransfer.files[0];
+  if (file) loadFile(file);
+});
+
+async function loadFile(file) {
+  const ext = file.name.split('.').pop().toLowerCase();
+
+  // Auto-fill report name if empty
+  if (!document.getElementById('reportName').value) {
+    document.getElementById('reportName').value = file.name.replace(/\.[^/.]+$/, '');
+  }
+
+  if (ext === 'txt') {
+    const text = await file.text();
+    document.getElementById('textInput').value = text;
+    showFileChip(file.name, text.split(/\s+/).length);
+    showToast('✓ Archivo TXT cargado', 'success');
+    return;
+  }
+
+  if (ext === 'pdf') {
+    if (typeof pdfjsLib === 'undefined') {
+      showToast('⚠ PDF.js no disponible. Necesitas conexión a internet.', 'error');
+      return;
+    }
+    await extractPDF(file);
+    return;
+  }
+
+  showToast('Formato no soportado. Usa PDF o TXT.', 'error');
+}
+
+async function extractPDF(file) {
+  const progressWrap = document.getElementById('progressWrap');
+  const progressFill = document.getElementById('progressFill');
+  const progressLabel = document.getElementById('progressLabel');
+  const progressPct = document.getElementById('progressPct');
+  const analyzeBtn = document.getElementById('analyzeBtn');
+
+  progressWrap.style.display = 'block';
+  analyzeBtn.disabled = true;
+  document.getElementById('textInput').value = '';
+
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    const totalPages = pdf.numPages;
+
+    progressLabel.textContent = `Extrayendo texto — ${totalPages} páginas`;
+    let fullText = '';
+
+    for (let i = 1; i <= totalPages; i++) {
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      const pageText = content.items.map(item => item.str).join(' ');
+      fullText += pageText + '\n';
+
+      const pct = Math.round((i / totalPages) * 100);
+      progressFill.style.width = pct + '%';
+      progressPct.textContent = pct + '%';
+    }
+
+    document.getElementById('textInput').value = fullText.trim();
+    progressWrap.style.display = 'none';
+    analyzeBtn.disabled = false;
+
+    const wordCount = fullText.trim().split(/\s+/).length;
+    showFileChip(file.name, wordCount);
+    showToast(`✓ PDF extraído — ${totalPages} páginas, ${wordCount.toLocaleString()} palabras`, 'success');
+
+  } catch (err) {
+    progressWrap.style.display = 'none';
+    analyzeBtn.disabled = false;
+    showToast('Error al leer el PDF. Intenta copiar el texto manualmente.', 'error');
+    console.error(err);
+  }
+}
+
+function showFileChip(filename, wordCount) {
+  const chip = document.getElementById('fileChip');
+  chip.style.display = 'flex';
+  chip.innerHTML = `
+    <span>📄 ${filename}</span>
+    <span style="opacity:0.6">${wordCount.toLocaleString()} palabras</span>
+    <span class="remove-file" onclick="clearFile()">×</span>
+  `;
+  chip.className = 'file-chip';
+}
+
+function clearFile() {
+  document.getElementById('fileChip').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('textInput').value = '';
+}
+
+// ============================================================
+// ANALYSIS ENGINE
+// ============================================================
+function analyzeText() {
+  const text = document.getElementById('textInput').value.trim();
+  if (!text) { showToast('Sube un PDF o pega texto primero.', 'error'); return; }
+
+  const textLower = text.toLowerCase();
+  const wordCount = text.split(/\s+/).length;
+
+  const results = STRATEGIES.map(strategy => {
+    let totalHits = 0;
+    const foundKeywords = [];
+    strategy.keywords.forEach(kw => {
+      const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const matches = (textLower.match(new RegExp(escaped, 'gi')) || []).length;
+      if (matches > 0) { totalHits += matches; foundKeywords.push({ kw, count: matches }); }
+    });
+    return { ...strategy, hits: totalHits, foundKeywords: foundKeywords.sort((a,b) => b.count - a.count).slice(0, 8) };
+  });
+
+  const maxHits = Math.max(...results.map(r => r.hits), 1);
+  const weighted = results.map(r => ({
+    ...r,
+    weight: r.hits === 0 ? 0 : Math.max(1, Math.round((r.hits / maxHits) * 5))
+  }));
+
+  renderResults(weighted, wordCount);
+  document.getElementById('saveBtn').style.display = 'block';
+  window._lastAnalysis = {
+    name: document.getElementById('reportName').value || 'Reporte sin nombre',
+    results: weighted,
+    wordCount,
+    date: new Date().toLocaleDateString('es-ES')
+  };
+}
+
+function renderResults(results, wordCount) {
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('analysisResults').style.display = 'block';
+
+  const totalHits = results.reduce((s, r) => s + r.hits, 0);
+  const strategiesFound = results.filter(r => r.hits > 0).length;
+  const maxWeight = Math.max(...results.map(r => r.weight));
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="stat-card"><div class="stat-value" style="color:var(--accent)">${totalHits}</div><div class="stat-label">Hits totales</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--accent3)">${strategiesFound}/10</div><div class="stat-label">Estrategias</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:var(--accent2)">${wordCount.toLocaleString()}</div><div class="stat-label">Palabras</div></div>
+    <div class="stat-card"><div class="stat-value" style="color:#ffd700">${maxWeight}/5</div><div class="stat-label">Peso máximo</div></div>
+  `;
+
+  const maxHits = Math.max(...results.map(r => r.hits), 1);
+  let html = '';
+  const labels = { investee: 'Investee Level', fund: 'Fund Level', community: 'Community Level' };
+
+  ['investee','fund','community'].forEach(level => {
+    const color = LEVEL_COLORS[level];
+    html += `<div class="level-header"><span class="dot" style="background:${color}"></span>${labels[level]}</div>`;
+    results.filter(r => r.level === level).forEach(r => {
+      const barPct = Math.round((r.hits / maxHits) * 100);
+      const stars = Array.from({length:5}, (_,i) => `<span class="star ${i < r.weight ? 'active' : ''}">★</span>`).join('');
+      html += `
+        <div class="strategy-row">
+          <div class="strategy-name"><span class="level-dot" style="background:${color}"></span>${r.name}</div>
+          <div class="bar-track"><div class="bar-fill ${level}" style="width:${barPct}%"></div></div>
+          <div class="freq-count">${r.hits} hits</div>
+          <div class="weight-badge">${stars}</div>
+        </div>`;
+    });
+  });
+
+  document.getElementById('strategiesGrid').innerHTML = html;
+
+  const allKws = results.flatMap(r => r.foundKeywords.map(kw => ({ ...kw, level: r.level })))
+    .sort((a,b) => b.count - a.count).slice(0, 30);
+
+  document.getElementById('keywordsFound').innerHTML = `
+    <div class="kw-title">Keywords encontrados (top 30)</div>
+    <div class="kw-tags">
+      ${allKws.length
+        ? allKws.map(k => `<span class="kw-tag ${k.level}">${k.kw}<span class="kw-count">×${k.count}</span></span>`).join('')
+        : '<span style="color:var(--muted);font-size:11px">No se encontraron keywords relevantes.</span>'}
+    </div>`;
+}
+
+// ============================================================
+// MULTI-REPORT COMPARISON
+// ============================================================
+function saveReport() {
+  if (!window._lastAnalysis) return;
+  const i = savedReports.findIndex(r => r.name === window._lastAnalysis.name);
+  if (i >= 0) savedReports[i] = {...window._lastAnalysis};
+  else savedReports.push({...window._lastAnalysis});
+  document.getElementById('reportCount').textContent = savedReports.length;
+  showToast(`✓ "${window._lastAnalysis.name}" guardado`, 'success');
+}
+
+function removeReport(i) {
+  savedReports.splice(i, 1);
+  document.getElementById('reportCount').textContent = savedReports.length;
+  renderSavedReports();
+  renderCompareTable();
+}
+
+function renderSavedReports() {
+  document.getElementById('savedReportsList').innerHTML = savedReports.length
+    ? savedReports.map((r,i) => `
+        <div class="report-chip">
+          <span>${r.name.length > 25 ? r.name.slice(0,25)+'…' : r.name}</span>
+          <span style="opacity:0.5;font-size:10px">${r.date}</span>
+          <span class="remove" onclick="removeReport(${i})">×</span>
+        </div>`).join('')
+    : '<span style="color:var(--muted);font-size:11px">Sin reportes guardados aún. Analiza y guarda reportes para compararlos.</span>';
+}
+
+function renderCompareTable() {
+  if (!savedReports.length) {
+    document.getElementById('compareTable').innerHTML =
+      '<div class="empty-state"><div class="empty-icon">📊</div><div>Guarda al menos un reporte para ver la comparación</div></div>';
+    return;
+  }
+
+  const maxPerStrat = {};
+  STRATEGIES.forEach(s => {
+    maxPerStrat[s.id] = Math.max(...savedReports.map(r => r.results.find(x => x.id === s.id)?.hits || 0), 1);
+  });
+
+  let html = `<div style="overflow-x:auto"><table class="multi-table"><thead><tr>
+    <th>Estrategia</th><th>Nivel</th>
+    ${savedReports.map(r => `<th title="${r.name}">${r.name.length > 16 ? r.name.slice(0,16)+'…' : r.name}</th>`).join('')}
+  </tr></thead><tbody>`;
+
+  STRATEGIES.forEach(s => {
+    const color = LEVEL_COLORS[s.level];
+    html += `<tr>
+      <td style="font-weight:500;white-space:nowrap">${s.name}</td>
+      <td><span style="font-size:10px;color:${color}">${s.level}</span></td>
+      ${savedReports.map(r => {
+        const res = r.results.find(x => x.id === s.id);
+        const hits = res?.hits || 0;
+        const weight = res?.weight || 0;
+        const pct = Math.round((hits / maxPerStrat[s.id]) * 100);
+        return `<td><div class="cell-bar">
+          <div class="cell-mini-bar"><div style="width:${pct}%;height:100%;background:${color};border-radius:3px"></div></div>
+          <span style="font-size:10px;color:var(--muted);min-width:20px">${hits}</span>
+          <span style="font-size:9px;color:#ffd700;letter-spacing:-1px">${'★'.repeat(weight)}${'☆'.repeat(5-weight)}</span>
+        </div></td>`;
+      }).join('')}
+    </tr>`;
+  });
+
+  html += `</tbody></table></div>
+    <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">
+      <button class="btn-secondary" style="font-size:11px" onclick="exportCSV()">⬇ Exportar CSV</button>
+      <button class="btn-secondary" style="font-size:11px" onclick="exportJSON()">⬇ Exportar JSON</button>
+    </div>`;
+  document.getElementById('compareTable').innerHTML = html;
+}
+
+function exportCSV() {
+  let csv = 'Estrategia,Nivel,' + savedReports.map(r => `"${r.name}"`).join(',') + '\n';
+  STRATEGIES.forEach(s => {
+    csv += [s.name, s.level, ...savedReports.map(r => r.results.find(x => x.id === s.id)?.weight || 0)].join(',') + '\n';
+  });
+  downloadFile(csv, 'IOVC_analysis.csv', 'text/csv');
+}
+
+function exportJSON() {
+  const data = savedReports.map(r => ({
+    report: r.name,
+    date: r.date,
+    wordCount: r.wordCount,
+    strategies: Object.fromEntries(r.results.map(s => [s.id, { hits: s.hits, weight: s.weight }]))
+  }));
+  downloadFile(JSON.stringify(data, null, 2), 'IOVC_analysis.json', 'application/json');
+}
+
+function downloadFile(content, filename, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([content], {type}));
+  a.download = filename;
+  a.click();
+  showToast(`⬇ ${filename} descargado`, 'success');
+}
+
+function switchTab(tab) {
+  document.getElementById('tab-current').classList.toggle('active', tab === 'current');
+  document.getElementById('tab-compare').classList.toggle('active', tab === 'compare');
+  document.getElementById('currentView').style.display = tab === 'current' ? 'block' : 'none';
+  document.getElementById('compareView').style.display = tab === 'compare' ? 'block' : 'none';
+  if (tab === 'compare') { renderSavedReports(); renderCompareTable(); }
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimer;
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = `toast show ${type}`;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { t.classList.remove('show'); }, 3000);
+}
+
+// ============================================================
+// DEMO & UTILS
+// ============================================================
+function loadDemo() {
+  document.getElementById('reportName').value = 'GIIN State of Market 2024 (demo)';
+  document.getElementById('textInput').value = `At GIIN, we work with impact investors to ensure that impact is planned from the outset of every investment. Our portfolio companies engage in impact planning workshops where they define their theory of change and impact thesis together with fund managers. This collaborative process ensures mission alignment throughout the investment lifecycle.
+
+Impact measurement is central to our approach. We help investors establish clear KPIs and impact metrics for each investee, using IRIS+ indicators where applicable. Key performance indicators are set before investment and monitored quarterly. Our impact data shows that 89% of portfolio companies met their impact targets in 2023. We benchmark performance against sector standards and identify negative externalities to ensure net positive impact.
+
+Transparency through impact reporting is a core pillar. All fund managers in our network publish annual impact reports, and we require regular disclosure to stakeholders. Our reporting standards align with SFDR and GRI frameworks, enabling accountability across the portfolio.
+
+At the fund level, governance structures are designed to protect mission integrity. Board representation and impact committees ensure governance supports long-term additionality. Many funds include mission drift clauses in their legal documentation and investment contracts to prevent deviation from impact goals. The Limited Partnership Agreement (LPA) formalizes these commitments.
+
+Talent management practices have evolved significantly. Dedicated impact professionals are now embedded across investment teams, with regular impact training ensuring the whole team is impact-driven. Many funds embed impact in their DNA by hiring impact specialists and creating dedicated impact roles.
+
+Carried interest structures increasingly include impact hurdles, linking financial incentives to impact performance. Financial incentives tied to impact KPIs ensure fund managers are compensated based on both financial and social returns.
+
+At the community level, portfolio engagement through peer learning sessions and community building among investees is common. Investee community networks help share best practices and identify synergies, including supplier-buyer relationships across the portfolio.
+
+Ecosystem building is critical for the field. Our market building work focuses on developing impact standards, advocating for enabling regulation, and building the legitimacy of the impact investing sector. We work with limited partners, corporate partners and policymakers to foster systemic change and ecosystem development.`;
+  analyzeText();
+  showToast('★ Demo cargado', 'success');
+}
+
+function clearAll() {
+  document.getElementById('textInput').value = '';
+  document.getElementById('reportName').value = '';
+  document.getElementById('fileChip').style.display = 'none';
+  document.getElementById('fileInput').value = '';
+  document.getElementById('emptyState').style.display = 'block';
+  document.getElementById('analysisResults').style.display = 'none';
+  document.getElementById('saveBtn').style.display = 'none';
+}
+</script>
+</body>
+</html>
