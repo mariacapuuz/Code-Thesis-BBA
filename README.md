@@ -106,7 +106,7 @@ Where `max_hits` is the highest keyword frequency observed across all strategies
 
 ## Corpus analyzed in the thesis
 
-The tool was used to analyze 30 reports divided into three groups:
+The tool was used to analyze 35 reports divided into three groups:
 
 - **Group 1 — Impact Fund Reports (n = 9):** Bridges Fund Management (AR 2022/23, AR 2023/24, Transparency Report 2023), Big Society Capital (2023), Big Issue Invest (2022/23), SWEN Capital Partners Blue Ocean (2023), Pymwymic (2021, 2023), Triodos Impact Strategy Funds (2023).
 
